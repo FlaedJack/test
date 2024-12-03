@@ -1,0 +1,130 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+
+namespace CE207
+{
+    public interface IMeter
+    {
+        void Authorize(string address, string password); // Метод авторизации 
+        DateTime ReadDateTime(); // Метод чтения времени
+        void WriteDateTime(DateTime dateTime); // Метод установки времени
+        void WriteTariffProgram(Dictionary<int, string> tariffTransitions); // Метод записи тариф. программы
+    }
+
+    public abstract class MeterBase(string serialNumber, string address, string password) : IMeter
+    {
+        protected string SerialNumber = serialNumber;
+        protected string Address = address;
+        protected string Password = password;
+
+        public void Authorize(string address, string password)
+        {
+            Console.WriteLine("Проверка авторизации...");
+            Thread.Sleep(2000); // Имитация задержки
+
+            // Проверка на правильный адрес и пароль 
+            if (Address != address || Password != password)
+            {
+                Console.WriteLine("Неверный адрес или пароль.");
+                throw new UnauthorizedAccessException(); // Исключение в случае неверных данных
+            }
+
+            Console.WriteLine("Авторизация прошла успешно!");
+        }
+
+        public DateTime ReadDateTime()
+        {
+            DateTime currentDateTime = DateTime.Now;
+            Console.WriteLine($"Текущее время: {currentDateTime:dd.MM.yyyy HH:mm:ss}");
+            return currentDateTime;
+        }
+
+        public void WriteDateTime(DateTime dateTime)
+        {
+            Console.WriteLine($"Установка времени: {dateTime:yyyy.MM.dd HH:mm:ss}");
+        }
+
+        public abstract void WriteTariffProgram(Dictionary<int, string> tariffTransitions);
+    }
+
+    public class MeterCE207(string serialNumber, string address, string password) : MeterBase(serialNumber, address, password)
+    {
+        public override void WriteTariffProgram(Dictionary<int, string> tariffTransitions)
+        {
+            Console.WriteLine("Тарифная программа для CE207:");
+
+            // Перебор и выводы всех тарифов
+            foreach (var transition in tariffTransitions)
+            {
+                Console.WriteLine($"Тариф {transition.Key}: Начало в {transition.Value}");
+            }
+        }
+    }
+
+    public class MeterCE208(string serialNumber, string address, string password) : MeterBase(serialNumber, address, password)
+    {
+        public override void WriteTariffProgram(Dictionary<int, string> tariffTransitions)
+        {
+            Console.WriteLine("Тарифная программа для CE208:");
+
+            foreach (var transition in tariffTransitions)
+            {
+                Console.WriteLine($"Тариф {transition.Key}: Начало в {transition.Value}");
+            }
+        }
+    }
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            ArgumentNullException.ThrowIfNull(args);
+
+            try
+            {
+                Console.WriteLine("Работа со счетчиком CE207");
+                MeterCE207 ce207 = new("12345", "16", "1234567812345678");
+                ce207.Authorize("16", "1234567812345678");
+                DateTime currentDateTime = ce207.ReadDateTime();
+                ce207.WriteDateTime(currentDateTime);
+
+                Dictionary<int, string> ce207Tariffs = new()
+                {
+                    { 1, "00:00" },
+                    { 2, "06:00" },
+                    { 3, "12:00" },
+                    { 4, "18:00" }
+                };
+                ce207.WriteTariffProgram(ce207Tariffs);
+
+                Console.WriteLine("\nРабота со счетчиком CE208");
+                MeterCE208 ce208 = new("67890", "16", "1234567812345678");
+                ce208.Authorize("16", "1234567812345678");
+                currentDateTime = ce208.ReadDateTime();
+                ce208.WriteDateTime(currentDateTime);
+
+                Dictionary<int, string> dictionary = new()
+                {
+                    { 1, "00:00" },
+                    { 2, "03:00" },
+                    { 3, "06:00" },
+                    { 4, "09:00" },
+                    { 5, "12:00" },
+                    { 6, "15:00" },
+                    { 7, "18:00" },
+                    { 8, "21:00" }
+                };
+                Dictionary<int, string> ce208Tariffs = dictionary;
+                ce208.WriteTariffProgram(ce208Tariffs);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                Console.WriteLine("Ошибка авторизации.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Произошла ошибка: {ex.Message}");
+            }
+        }
+    }
+}
